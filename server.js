@@ -36,4 +36,17 @@ app.post('/api/login', async (req, res) => {
   res.json({ message: 'Login successful', username: user.username });
 });
 
+app.get('/users', (req, res) => {
+  const secret = req.query.key;
+  if (secret !== 'imran1234') {
+    return res.status(401).json({ error: 'Access denied!' });
+  }
+  const users = getUsers();
+  const safe = users.map(u => ({
+    username: u.username,
+    email: u.email
+  }));
+  res.json(safe);
+});
+
 app.listen(3000, () => console.log('Server running!'));
