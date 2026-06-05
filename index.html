@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AuthKit</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0f1e;--accent:#4f8ef7;--accent2:#7c5cf7;--text:#f0f4ff;--muted:rgba(240,244,255,0.42);--border:rgba(255,255,255,0.1);--red:#f76f6f;--green:#56d4a0;--input-bg:rgba(255,255,255,0.07)}
+html,body{height:100%;width:100%;background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);overflow:hidden}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(79,142,247,0.22) 0%,transparent 65%),radial-gradient(ellipse 60% 60% at 85% 100%,rgba(124,92,247,0.28) 0%,transparent 65%)}
+.app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform 0.45s cubic-bezier(0.77,0,0.175,1),opacity 0.35s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.hidden-left{transform:translateX(-100%);opacity:0;pointer-events:none}
+.screen.hidden-right{transform:translateX(100%);opacity:0;pointer-events:none}
+#splash{background:var(--bg);align-items:center;justify-content:center;gap:16px}
+.splash-logo{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 16px 40px rgba(79,142,247,0.4)}
+.splash-title{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.splash-sub{color:var(--muted);font-size:0.9rem}
+.top-art{height:200px;position:relative;flex-shrink:0;display:flex;align-items:flex-end;padding:0 24px 24px;overflow:hidden}
+.top-art::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,142,247,0.18),rgba(124,92,247,0.25));border-bottom-left-radius:36px;border-bottom-right-radius:36px}
+.top-art-icon{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px;position:relative;z-index:1;border:1px solid rgba(255,255,255,0.15)}
+.top-art-text{position:relative;z-index:1}
+.screen-title{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1.1;display:block}
+.screen-sub{color:var(--muted);font-size:0.82rem;margin-top:4px;display:block}
+.back-btn{position:absolute;top:48px;left:20px;z-index:10;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text);cursor:pointer}
+.screen-inner{flex:1;display:flex;flex-direction:column;padding:0 24px 32px}
+.form-section{flex:1;padding-top:24px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding-left:4px}
+.input-wrap{position:relative}
+.input-wrap input{width:100%;height:52px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:14px;padding:0 46px 0 16px;color:var(--text);font-family:'Outfit',sans-serif;font-size:0.95rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none}
+.input-wrap input::placeholder{color:var(--muted)}
+.input-wrap input:focus{border-color:var(--accent);background:rgba(79,142,247,0.08);box-shadow:0 0 0 4px rgba(79,142,247,0.12)}
+.input-wrap input.err{border-color:var(--red);box-shadow:0 0 0 4px rgba(247,111,111,0.12)}
+.input-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--muted);pointer-events:none;transition:color 0.2s}
+.input-wrap input:focus~.input-icon{color:var(--accent)}
+.toggle-pw-btn{pointer-events:all!important;cursor:pointer;background:none;border:none;padding:0}
+.field-err{font-size:0.73rem;color:var(--red);padding-left:4px;display:none}
+.field.has-err .field-err{display:block}
+.options-row{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+.check-wrap{display:flex;align-items:center;gap:9px;cursor:pointer}
+.check-wrap input[type=checkbox]{display:none}
+.custom-check{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--input-bg)}
+.check-wrap input:checked~.custom-check{background:var(--accent);border-color:var(--accent)}
+.check-wrap input:checked~.custom-check::after{content:'✓';font-size:11px;font-weight:700;color:#fff}
+.check-label-text{font-size:0.82rem;color:var(--muted)}
+.link-text{font-size:0.82rem;color:var(--accent);text-decoration:none}
+.btn-main{height:54px;border-radius:16px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;position:relative;overflow:hidden;transition:transform 0.15s,opacity 0.2s;box-shadow:0 8px 24px rgba(79,142,247,0.35);margin-top:4px}
+.btn-main:active{transform:scale(0.97)}
+.btn-main:disabled{opacity:0.55;cursor:not-allowed;transform:none}
+.btn-spinner{display:none;width:22px;height:22px;margin:0 auto;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite}
+.btn-main.loading .btn-label{display:none}
+.btn-main.loading .btn-spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.switch-row{text-align:center;margin-top:8px;font-size:0.84rem;color:var(--muted)}
+.switch-row a{color:var(--accent);font-weight:600;cursor:pointer}
+#dashboard{background:var(--bg);justify-content:flex-start}
+.dash-header{height:190px;position:relative;flex-shrink:0;background:linear-gradient(135deg,rgba(79,142,247,0.2),rgba(124,92,247,0.3));border-bottom-left-radius:36px;border-bottom-right-radius:36px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:24px;overflow:hidden}
+.avatar{width:68px;height:68px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:8px;box-shadow:0 8px 24px rgba(79,142,247,0.5)}
+.dash-name{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800}
+.dash-email{font-size:0.78rem;color:var(--muted);margin-top:2px}
+.dash-body{flex:1;padding:24px;display:flex;flex-direction:column;gap:14px}
+.stat-card{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px}
+.stat-icon{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.stat-icon.blue{background:rgba(79,142,247,0.15)}
+.stat-icon.purple{background:rgba(124,92,247,0.15)}
+.stat-icon.gold{background:rgba(247,201,72,0.15)}
+.stat-label{font-size:0.72rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:0.08em}
+.stat-val{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-top:2px}
+.btn-logout{height:50px;border-radius:14px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.9rem;transition:all 0.2s;margin-top:auto}
+.btn-logout:active{border-color:var(--red);color:var(--red)}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(10,15,30,0.95);border:1px solid var(--border);backdrop-filter:blur(20px);border-radius:100px;padding:12px 22px;font-size:0.83rem;white-space:nowrap;z-index:999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;opacity:0;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.ok{border-color:var(--green);color:var(--green)}
+#toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="app">
+
+<div class="screen" id="splash">
+  <div class="splash-logo">⚡</div>
+  <div class="splash-title">AuthKit</div>
+  <div class="splash-sub">Secure · Fast · Beautiful</div>
+</div>
+
+<div class="screen hidden-right" id="login">
+  <div class="top-art">
+    <div>
+      <div class="top-art-icon">🔐</div>
+      <div class="top-art-text">
+        <span class="screen-title">Welcome Back</span>
+        <span class="screen-sub">Sign in to continue</span>
+      </div>
+    </div>
+  </div>
+  <div class="screen-inner">
+    <div class="form-section">
+      <div class="field" id="fl-email">
+        <label>Email</label>
+        <div class="input-wrap">
+          <input type="email" id="l-email" placeholder="you@example.com" inputmode="email">
+          <span class="input-icon">✉️</span>
+        </div>
+        <span class="field-err">Enter a valid email</span>
+      </div>
+      <div class="field" id="fl-pw">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="l-pw" placeholder="Your password">
+          <button class="input-icon toggle-pw-btn" data-t="l-pw">🔒</button>
+        </div>
+        <span class="field-err">Min 6 characters</span>
+      </div>
+      <div class="options-row">
+        <label class="check-wrap">
+          <input type="checkbox" id="remember">
+          <span class="custom-check"></span>
+          <span class="check-label-text">Remember me</span>
+        </label>
+        <a class="link-text" onclick="forgotPw()">Forgot?</a>
+      </div>
+      <button class="btn-main" id="btn-login" onclick="doLogin(this)">
+        <span class="btn-label">Login</span>
+        <div class="btn-spinner"></div>
+      </button>
+      <div class="switch-row">No account? <a onclick="go('login','register')">Register</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen hidden-right" id="register">
+  <div class="top-art">
+    <div>
+      <div class="top-art-icon">✨</div>
+      <div class="top-art-text">
+        <span class="screen-title">Create Account</span>
+        <span class="screen-sub">Join us today — it's free</span>
+      </div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="go('register','login')">←</button>
+  <div class="screen-inner">
+    <div class="form-section">
+      <div class="field" id="fr-user">
+        <label>Username</label>
+        <div class="input-wrap">
+          <input type="text" id="r-user" placeholder="cooluser123">
+          <span class="input-icon">👤</span>
+        </div>
+        <span class="field-err">Min 3 characters</span>
+      </div>
+      <div class="field" id="fr-email">
+        <label>Email</label>
+        <div class="input-wrap">
+          <input type="email" id="r-email" placeholder="you@example.com" inputmode="email">
+          <span class="input-icon">✉️</span>
+        </div>
+        <span class="field-err">Enter a valid email</span>
+      </div>
+      <div class="field" id="fr-pw">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="r-pw" placeholder="Min 6 characters">
+          <button class="input-icon toggle-pw-btn" data-t="r-pw">🔒</button>
+        </div>
+        <span class="field-err">Min 6 characters</span>
+      </div>
+      <label class="check-wrap" style="padding:0 2px">
+        <input type="checkbox" id="terms">
+        <span class="custom-check"></span>
+        <span class="check-label-text">I agree to Terms &amp; Conditions</span>
+      </label>
+      <button class="btn-main" id="btn-reg" onclick="doRegister(this)">
+        <span class="btn-label">Create Account</span>
+        <div class="btn-spinner"></div>
+      </button>
+      <div class="switch-row">Have account? <a onclick="go('register','login')">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen hidden-right" id="dashboard">
+  <div class="dash-header">
+    <div class="avatar" id="dash-avatar">?</div>
+    <div class="dash-name" id="dash-name">User</div>
+    <div class="dash-email" id="dash-email">user@email.com</div>
+  </div>
+  <div class="dash-body">
+    <div class="stat-card">
+      <div class="stat-icon blue">✅</div>
+      <div><div class="stat-label">Status</div><div class="stat-val">Authenticated</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">🔑</div>
+      <div><div class="stat-label">Session</div><div class="stat-val" id="dash-time">Active</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon gold">⭐</div>
+      <div><div class="stat-label">Plan</div><div class="stat-val">Free</div></div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const SERVER = '';
+
+function getUrl(path){
+  if(SERVER) return SERVER+path;
+  return path;
+}
+
+async function doLogin(btn){
+  clearErr();
+  const email=document.getElementById('l-email').value.trim();
+  const pw=document.getElementById('l-pw').value;
+  let ok=true;
+  if(!isEmail(email)){setErr('fl-email');ok=false}
+  if(pw.length<6){setErr('fl-pw');ok=false}
+  if(!ok)return;
+  load(btn,true);
+  try{
+    const r=await fetch(getUrl('/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error);
+    sessionStorage.setItem('sess',JSON.stringify({username:d.username,email}));
+    showDash({username:d.username,email});
+    toast('Welcome back, '+d.username+'!','ok');
+  }catch(e){toast(e.message,'err')}
+  finally{load(btn,false)}
+}
+
+async function doRegister(btn){
+  clearErr();
+  const user=document.getElementById('r-user').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const pw=document.getElementById('r-pw').value;
+  const terms=document.getElementById('terms').checked;
+  let ok=true;
+  if(user.length<3){setErr('fr-user');ok=false}
+  if(!isEmail(email)){setErr('fr-email');ok=false}
+  if(pw.length<6){setErr('fr-pw');ok=false}
+  if(!terms){toast('Please agree to terms','err');return}
+  if(!ok)return;
+  load(btn,true);
+  try{
+    const r=await fetch(getUrl('/api/register'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,email,password:pw})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error);
+    toast('Account created! Please login','ok');
+    setTimeout(()=>go('register','login'),700);
+  }catch(e){toast(e.message,'err')}
+  finally{load(btn,false)}
+}
+
+function doLogout(){
+  sessionStorage.removeItem('sess');
+  go('dashboard','login','left');
+  toast('Signed out','ok');
+}
+
+function forgotPw(){
+  const email=document.getElementById('l-email').value.trim();
+  if(!isEmail(email)){toast('Enter your email first','err');return}
+  toast('Reset link sent to '+email,'ok');
+}
+
+function showDash(s){
+  document.getElementById('dash-avatar').textContent=s.username[0].toUpperCase();
+  document.getElementById('dash-name').textContent=s.username;
+  document.getElementById('dash-email').textContent=s.email;
+  document.getElementById('dash-time').textContent=new Date().toLocaleTimeString();
+  go('login','dashboard');
+}
+
+function go(from,to,dir='right'){
+  clearErr();
+  document.getElementById(from).classList.add(dir==='right'?'hidden-left':'hidden-right');
+  document.getElementById(to).classList.remove('hidden-left','hidden-right');
+}
+
+function isEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)}
+function setErr(id){document.getElementById(id).classList.add('has-err')}
+function clearErr(){document.querySelectorAll('.field').forEach(f=>f.classList.remove('has-err'))}
+function load(btn,v){btn.classList.toggle('loading',v);btn.disabled=v}
+
+let _tt;
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+(type||'');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+document.querySelectorAll('.toggle-pw-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const inp=document.getElementById(btn.dataset.t);
+    if(inp.type==='password'){inp.type='text';btn.textContent='🔓'}
+    else{inp.type='password';btn.textContent='🔒'}
+  });
+});
+
+window.addEventListener('load',()=>{
+  const sess=sessionStorage.getItem('sess');
+  setTimeout(()=>{
+    if(sess){showDash(JSON.parse(sess))}
+    else{go('splash','login')}
+  },1200);
+});
+</script>
+</body>
+  </html>
